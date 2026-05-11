@@ -1,4 +1,4 @@
-import type { Role } from "@prisma/client";
+export type Role = "USER" | "STAFF" | "ADMIN" | "DEVELOPER";
 
 export const ROLE_HIERARCHY: Record<Role, number> = {
   USER: 1,
@@ -7,7 +7,9 @@ export const ROLE_HIERARCHY: Record<Role, number> = {
   DEVELOPER: 4
 };
 
-export function hasRole(userRole: Role | undefined, required: Role) {
+export function hasRole(userRole: string | undefined | null, required: Role) {
   if (!userRole) return false;
-  return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[required];
+  const level = ROLE_HIERARCHY[userRole as Role];
+  if (level === undefined) return false;
+  return level >= ROLE_HIERARCHY[required];
 }

@@ -9,7 +9,15 @@ export default async function FeesPage() {
     <div>
       <h1 className="font-display text-3xl font-bold">Fee tiers</h1>
       <p className="text-white/60 mt-1">Control platform fees by amount band. Changes take effect instantly.</p>
-      <FeeManager tiers={tiers.map(t => ({ ...t, createdAt: t.createdAt.toISOString(), updatedAt: t.updatedAt.toISOString() }))} />
+      <FeeManager tiers={tiers.map(t => ({
+        id: t.id,
+        name: t.name,
+        minAmountCents: t.minAmountCents,
+        maxAmountCents: t.maxAmountCents,
+        percentBps: t.percentBps,
+        fixedCents: t.fixedCents,
+        active: t.active
+      }))} />
     </div>
   );
 }

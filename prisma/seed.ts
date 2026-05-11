@@ -1,4 +1,4 @@
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -15,30 +15,28 @@ async function main() {
       email: adminEmail,
       name: "EzyDeal Developer",
       passwordHash: hash,
-      role: Role.DEVELOPER,
+      role: "DEVELOPER",
       verified: true
     }
   });
 
-  // Demo buyer + seller
   const demoPass = await bcrypt.hash("Demo@12345", 10);
-  const buyer = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: "buyer@ezydeal.com" },
     update: {},
-    create: { email: "buyer@ezydeal.com", name: "Demo Buyer", passwordHash: demoPass, role: Role.USER, verified: true }
+    create: { email: "buyer@ezydeal.com", name: "Demo Buyer", passwordHash: demoPass, role: "USER", verified: true }
   });
-  const seller = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: "seller@ezydeal.com" },
     update: {},
-    create: { email: "seller@ezydeal.com", name: "Demo Seller", passwordHash: demoPass, role: Role.USER, verified: true }
+    create: { email: "seller@ezydeal.com", name: "Demo Seller", passwordHash: demoPass, role: "USER", verified: true }
   });
 
-  // Default fee tiers
   const tiers = [
-    { name: "Starter",  minAmountCents: 0,        maxAmountCents: 50000,    percentBps: 350, fixedCents: 99 },
-    { name: "Standard", minAmountCents: 50001,    maxAmountCents: 500000,   percentBps: 275, fixedCents: 99 },
-    { name: "Pro",      minAmountCents: 500001,   maxAmountCents: 5000000,  percentBps: 200, fixedCents: 0  },
-    { name: "Enterprise", minAmountCents: 5000001, maxAmountCents: 100000000, percentBps: 100, fixedCents: 0 }
+    { name: "Starter",    minAmountCents: 0,       maxAmountCents: 50000,     percentBps: 350, fixedCents: 99 },
+    { name: "Standard",   minAmountCents: 50001,   maxAmountCents: 500000,    percentBps: 275, fixedCents: 99 },
+    { name: "Pro",        minAmountCents: 500001,  maxAmountCents: 5000000,   percentBps: 200, fixedCents: 0  },
+    { name: "Enterprise", minAmountCents: 5000001, maxAmountCents: 100000000, percentBps: 100, fixedCents: 0  }
   ];
   for (const t of tiers) {
     await prisma.feeTier.upsert({
@@ -48,7 +46,6 @@ async function main() {
     });
   }
 
-  // Welcome promotion
   await prisma.promotion.upsert({
     where: { code: "WELCOME25" },
     update: {},

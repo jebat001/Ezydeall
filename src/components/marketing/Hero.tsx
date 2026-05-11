@@ -1,8 +1,13 @@
 "use client";
 import { motion } from "framer-motion";
-import { Hero3D } from "./Hero3D";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { ShieldCheck, ArrowRight } from "lucide-react";
+
+const Hero3D = dynamic(() => import("./Hero3D").then(m => ({ default: m.Hero3D })), {
+  ssr: false,
+  loading: () => <div className="absolute inset-0 -z-10" />
+});
 
 export function Hero() {
   return (
@@ -16,7 +21,7 @@ export function Hero() {
           className="inline-flex items-center gap-2 rounded-full glass px-4 py-2 text-xs text-white/80"
         >
           <ShieldCheck className="h-4 w-4 text-brand-300" />
-          Licensed & regulated escrow — protecting every deal
+          Licensed &amp; regulated escrow — protecting every deal
         </motion.div>
 
         <motion.h1
@@ -71,7 +76,6 @@ export function Hero() {
         </motion.div>
       </div>
 
-      {/* scroll indicator */}
       <div className="pointer-events-none absolute inset-x-0 bottom-10 flex justify-center">
         <motion.div
           animate={{ y: [0, 10, 0] }}

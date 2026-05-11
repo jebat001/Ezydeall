@@ -4,32 +4,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-enum Role {
-  USER
-  STAFF
-  ADMIN
-  DEVELOPER
-}
-
-enum DealStatus {
-  DRAFT
-  AWAITING_PAYMENT
-  FUNDED
-  IN_PROGRESS
-  DELIVERED
-  RELEASED
-  DISPUTED
-  REFUNDED
-  CANCELLED
-}
-
-enum DealRole {
-  BUYER
-  SELLER
 }
 
 model User {
@@ -37,7 +13,7 @@ model User {
   email           String   @unique
   name            String?
   passwordHash    String
-  role            Role     @default(USER)
+  role            String   @default("USER")
   avatarUrl       String?
   verified        Boolean  @default(false)
   createdAt       DateTime @default(now())
@@ -50,26 +26,26 @@ model User {
 }
 
 model Deal {
-  id             String     @id @default(cuid())
+  id             String   @id @default(cuid())
   title          String
   description    String
   amountCents    Int
-  currency       String     @default("usd")
-  feeCents       Int        @default(0)
-  status         DealStatus @default(DRAFT)
-  creatorRole    DealRole
+  currency       String   @default("usd")
+  feeCents       Int      @default(0)
+  status         String   @default("DRAFT")
+  creatorRole    String
   buyerId        String
   sellerId       String
-  buyer          User       @relation("Buyer",  fields: [buyerId],  references: [id])
-  seller         User       @relation("Seller", fields: [sellerId], references: [id])
+  buyer          User     @relation("Buyer",  fields: [buyerId],  references: [id])
+  seller         User     @relation("Seller", fields: [sellerId], references: [id])
 
   paymentIntentId String?
   chargeId        String?
   promotionCode   String?
-  inspectionDays  Int        @default(3)
+  inspectionDays  Int      @default(3)
 
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   fundedAt       DateTime?
   deliveredAt    DateTime?
   releasedAt     DateTime?
@@ -99,30 +75,29 @@ model Dispute {
   deal       Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
 }
 
-// Platform-wide fee configuration (percentage + fixed). Admin-editable.
 model FeeTier {
-  id           String   @id @default(cuid())
-  name         String
+  id             String   @id @default(cuid())
+  name           String
   minAmountCents Int
   maxAmountCents Int
-  percentBps   Int      // basis points (e.g. 250 = 2.50%)
-  fixedCents   Int      @default(0)
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  percentBps     Int
+  fixedCents     Int      @default(0)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 model Promotion {
-  id          String   @id @default(cuid())
-  code        String   @unique
-  description String?
-  percentOff  Int      @default(0) // percent off fee
-  flatOffCents Int     @default(0)
-  active      Boolean  @default(true)
-  expiresAt   DateTime?
-  createdById String
-  createdBy   User     @relation("PromotionCreator", fields: [createdById], references: [id])
-  createdAt   DateTime @default(now())
+  id           String    @id @default(cuid())
+  code         String    @unique
+  description  String?
+  percentOff   Int       @default(0)
+  flatOffCents Int       @default(0)
+  active       Boolean   @default(true)
+  expiresAt    DateTime?
+  createdById  String
+  createdBy    User      @relation("PromotionCreator", fields: [createdById], references: [id])
+  createdAt    DateTime  @default(now())
 }
 
 model AuditLog {
