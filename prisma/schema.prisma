@@ -1,0 +1,137 @@
+// EzyDeal - Prisma schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  STAFF
+  ADMIN
+  DEVELOPER
+}
+
+enum DealStatus {
+  DRAFT
+  AWAITING_PAYMENT
+  FUNDED
+  IN_PROGRESS
+  DELIVERED
+  RELEASED
+  DISPUTED
+  REFUNDED
+  CANCELLED
+}
+
+enum DealRole {
+  BUYER
+  SELLER
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String?
+  passwordHash    String
+  role            Role     @default(USER)
+  avatarUrl       String?
+  verified        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  dealsAsBuyer    Deal[]   @relation("Buyer")
+  dealsAsSeller   Deal[]   @relation("Seller")
+  auditLogs       AuditLog[]
+  promotions      Promotion[] @relation("PromotionCreator")
+}
+
+model Deal {
+  id             String     @id @default(cuid())
+  title          String
+  description    String
+  amountCents    Int
+  currency       String     @default("usd")
+  feeCents       Int        @default(0)
+  status         DealStatus @default(DRAFT)
+  creatorRole    DealRole
+  buyerId        String
+  sellerId       String
+  buyer          User       @relation("Buyer",  fields: [buyerId],  references: [id])
+  seller         User       @relation("Seller", fields: [sellerId], references: [id])
+
+  paymentIntentId String?
+  chargeId        String?
+  promotionCode   String?
+  inspectionDays  Int        @default(3)
+
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  fundedAt       DateTime?
+  deliveredAt    DateTime?
+  releasedAt     DateTime?
+
+  messages       DealMessage[]
+  dispute        Dispute?
+}
+
+model DealMessage {
+  id        String   @id @default(cuid())
+  dealId    String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+model Dispute {
+  id         String   @id @default(cuid())
+  dealId     String   @unique
+  openedById String
+  reason     String
+  resolution String?
+  resolved   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  resolvedAt DateTime?
+  deal       Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+// Platform-wide fee configuration (percentage + fixed). Admin-editable.
+model FeeTier {
+  id           String   @id @default(cuid())
+  name         String
+  minAmountCents Int
+  maxAmountCents Int
+  percentBps   Int      // basis points (e.g. 250 = 2.50%)
+  fixedCents   Int      @default(0)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Promotion {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  description String?
+  percentOff  Int      @default(0) // percent off fee
+  flatOffCents Int     @default(0)
+  active      Boolean  @default(true)
+  expiresAt   DateTime?
+  createdById String
+  createdBy   User     @relation("PromotionCreator", fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String?
+  meta      String?
+  createdAt DateTime @default(now())
+  actor     User?    @relation(fields: [actorId], references: [id])
+}
